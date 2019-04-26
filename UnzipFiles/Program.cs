@@ -20,43 +20,55 @@ namespace UnzipFiles
             foreach (var patientDir in patientsDirectories)
             {
                 string finalPatientDir = outputPath + patientDir.Substring(patientDir.LastIndexOf("\\"));
-                if (!Directory.Exists(finalPatientDir))
+                if (!string.IsNullOrEmpty(finalPatientDir))
                 {
-                    Directory.CreateDirectory(finalPatientDir);
-                }
-                DirectoryInfo patientDirInfo = new DirectoryInfo(patientDir);
-                FileInfo[] patientDirFileInfos = patientDirInfo.GetFiles();
-                var files = Directory.GetFiles(patientDir);
-                foreach (var fileInfo in patientDirFileInfos)
-                {
-                    int i = 1;
-                    var newFileName = Path.GetFileName(fileInfo.FullName).Substring(0, Path.GetFileName(fileInfo.FullName).LastIndexOf('.'));
                     try
                     {
-                        if (File.Exists(finalPatientDir + "\\" + defaultFileName))
+                        if (!Directory.Exists(finalPatientDir))
                         {
-                            File.Delete(finalPatientDir + "\\" + defaultFileName);
+                            Directory.CreateDirectory(finalPatientDir);
                         }
-                        System.IO.Compression.ZipFile.ExtractToDirectory(fileInfo.FullName, finalPatientDir);
-                        var subDirInfo = new DirectoryInfo(finalPatientDir);
-                        FileInfo createdFileInfo = subDirInfo.GetFiles(defaultFileName).FirstOrDefault();
-
-                        if (createdFileInfo != null)
+                        DirectoryInfo patientDirInfo = new DirectoryInfo(patientDir);
+                        FileInfo[] patientDirFileInfos = patientDirInfo.GetFiles();
+                        var files = Directory.GetFiles(patientDir);
+                        foreach (var fileInfo in patientDirFileInfos)
                         {
-                            if (File.Exists(finalPatientDir + "\\" + newFileName + ".docx"))
+                            int i = 1;
+                            var newFileName = Path.GetFileName(fileInfo.FullName).Substring(0, Path.GetFileName(fileInfo.FullName).LastIndexOf('.'));
+                            try
                             {
-                                newFileName = newFileName + "_" + i;
-                                i++;
+                                if (File.Exists(finalPatientDir + "\\" + defaultFileName))
+                                {
+                                    File.Delete(finalPatientDir + "\\" + defaultFileName);
+                                }
+                                System.IO.Compression.ZipFile.ExtractToDirectory(fileInfo.FullName, finalPatientDir);
+                                var subDirInfo = new DirectoryInfo(finalPatientDir);
+                                FileInfo createdFileInfo = subDirInfo.GetFiles(defaultFileName).FirstOrDefault();
+
+                                if (createdFileInfo != null)
+                                {
+                                    if (File.Exists(finalPatientDir + "\\" + newFileName + ".docx"))
+                                    {
+                                        newFileName = newFileName + "_" + i;
+                                        i++;
+                                    }
+                                    File.Move(createdFileInfo.FullName, finalPatientDir + "\\" + newFileName + ".docx");
+                                    //File.Copy(createdFileInfo.FullName, @outputDirectory + "\\" + fileInfo.FullName.Substring(0, fileInfo.FullName.LastIndexOf('.')) + ".docx");
+                                    //File.Delete(createdFileInfo.FullName);
+                                }
                             }
-                            File.Move(createdFileInfo.FullName, finalPatientDir + "\\" + newFileName + ".docx");
-                            //File.Copy(createdFileInfo.FullName, @outputDirectory + "\\" + fileInfo.FullName.Substring(0, fileInfo.FullName.LastIndexOf('.')) + ".docx");
-                            //File.Delete(createdFileInfo.FullName);
+                            catch (Exception ex)
+                            {
+                                var e = ex;
+                                WriteLog("FolderName: " + patientDir + " , FileName: " + newFileName + ", Exception: " + ex.Message);
+
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
                         var e = ex;
-                        WriteLog("FolderName: " + patientDir + " , FileName: " + newFileName + ", Exception: " + ex.Message);
+                        WriteLog("FolderName: " + patientDir + ", finalPatientDir: " + finalPatientDir + ", Exception: " + ex.Message);
 
                     }
                 }
